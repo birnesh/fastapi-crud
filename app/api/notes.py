@@ -7,7 +7,7 @@ router = APIRouter()
 # post a note
 @router.post("/", response_model=NoteDB)
 async def post_note(note: NoteSchema):
-    note_id = crud.post(note)
+    note_id = await crud.post(note)
     response_object = {
         "id": note_id,
         "title": note.title,
@@ -20,7 +20,7 @@ async def post_note(note: NoteSchema):
 # retrieve a note
 @router.get("/{id}/", response_model=NoteDB)
 async def read_note(id:int):
-    note = crud.get(id)
+    note = await crud.get(id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return note
@@ -28,15 +28,15 @@ async def read_note(id:int):
 # get all notes
 @router.get("/", response_model=list[NoteDB])
 async def read_all_note():
-    return crud.get_all()
+    return await crud.get_all()
 
 # update a note
 @router.put("/{id}/",response_model=NoteDB)
 async def update_note(id:int , payload: NoteSchema):
-    note = crud.get(id) # checking to see if the note exists or not
+    note = await crud.get(id) # checking to see if the note exists or not
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
-    note_id = crud.put(id, payload)
+    note_id = await crud.put(id, payload)
     response_object = {
         "id": note_id,
         "title": payload.title,
@@ -49,8 +49,8 @@ async def update_note(id:int , payload: NoteSchema):
 # deleting a note
 @router.delete("/{id}/", response_model=NoteDB)
 async def delete_note(id:int):
-    note = crud.get(id) # checking whether the note exists or not
+    note = await crud.get(id) # checking whether the note exists or not
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
-    crud.delete(id)
+    await crud.delete(id)
     return note

@@ -1,44 +1,33 @@
 from app.api.models import NoteSchema
-from app.db import notes_list # temp db
+# from app.db import notes_list # temp db
+from app.db import notes, database
 
-def post(payload: NoteSchema):
-    note = {
-        "title": payload.title,
-        "description": payload.description,
-        "is_completed": payload.is_completed,
-        "created_at": payload.created_at
-    }
-    if len(notes_list) == 0:
-        note['id'] = 1
-    else:
-        note['id'] = notes_list[-1]['id']+1
-    notes_list.append(note)
-    return note['id']
+async def post(payload: NoteSchema):
+    query = notes.insert().values(
+        title=payload.title,
+        description=payload.description,
+        is_completed=payload.is_completed,
+        created_at=payload.created_at
+    )
+    return await database.execute(query=query)
 
-def get(id:int):
-    filtered_list = list(filter(lambda item: item["id"] == id, notes_list))
-    if len(filtered_list) > 0:
-        return filtered_list[0]
-    else:
-        return None
+async def get(id:int):
+    query = notes.select().where(id == notes.c.id)
+    return await database.fetch_one(query=query)
 
-def get_all():
-    return notes_list
+async def get_all():
+    query = notes.select()
+    return await database.fetch_all(query=query)
 
-def put(id:int, payload:NoteSchema):
-    # iterate through the list to update the note
-    for item in notes_list:
-        if item["id"] == id:
-            item["title"] = payload.title,
-            item["description"] = payload.description
-            item["is_completed"] = payload.is_completed
-            item["created_at"] = payload.created_at
-            break
-    return id
+async def put(id:int, payload:NoteSchema):
+    query = notes.update().where(id == notes.c.id).values(
+        title = payload.title,
+        description = payload.description,
+        is_completed = payload.is_completed,
+        created_at = payload.created_at
+    ).returning(notes.c.id)
+    return await database.execute(query=query)
 
-def delete(id:int):
-    # iterate through the list to delete the note by id
-    for idx in range(len(notes_list)):
-        if notes_list[idx]["id"] == id:
-            del notes_list[idx]
-    return id
+async def delete(id:int):
+    query = notes.delete().where(id == notes.c.id)
+    return await database.execute(query=query)
